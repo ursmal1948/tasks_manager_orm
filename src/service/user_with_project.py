@@ -1,14 +1,14 @@
 from dataclasses import dataclass
-from src.repositories.models import UserRepository, ProjectRepository
-from src.models import User, Project, Task
+from src.persistence.repositories.models import UserRepository, ProjectRepository
+from src.persistence.models import User, Project, Task
 
 
 @dataclass
 class UsersService:
     user_repo: UserRepository
 
-    def create_user(self, name: str) -> User:
-        user = User(name=name)
+    def create_user(self, name: str, email: str, password: str) -> User:
+        user = User(name=name, email=email, password=password)
         self.user_repo.save_or_update(user)
         return user
 
@@ -18,7 +18,9 @@ class UsersService:
             self.user_repo.save_or_update(
                 User(
                     id=user_id,
-                    name=new_name
+                    name=new_name,
+                    email=user.email,
+                    password=user.password
                 )
             )
             return new_name
@@ -53,21 +55,22 @@ class ProjectService:
 
 
 @dataclass
-class UserAndProjectService:
+class UsersWithProjectsService:
     user_repo: UserRepository
     project_repo: ProjectRepository
 
-    def add_user_and_project(self, user_name: str, project_name: str):
-        self.user_repo.save_or_update(User(name=user_name))
+    def add_user_with_project(self, user_name: str, user_email: str, user_password: str, project_name: str):
+        self.user_repo.save_or_update(User(name=user_name, email=user_email, password=user_password))
         user = self.user_repo.find_by_name(user_name)
         project = Project(name=project_name, user_id=user.id)
         self.project_repo.save_or_update(project)
         return user.id, project_name
 
-
-    def add_project_to_user(self, user_id: int, name: str) -> Project:
+    def add_project_to_user(self, user_id: int, project_name: str) -> Project:
         user = self.user_repo.find_by_id(user_id)
         if user:
-            project = Project(name=name, user_id=user.id)
+            project = Project(name=project_name, user_id=user.id)
             self.project_repo.save_or_update(project)
             return project
+
+    # def get_projects_with_desired_status_
