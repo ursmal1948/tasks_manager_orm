@@ -1,15 +1,7 @@
-from src.repositories.orm import CrudRepositoryORM
-from src.models import User, Project, Task
+from src.persistence.repositories.orm import CrudRepositoryORM
+from src.persistence.models import User, Project, Task, TaskHistory, TaskStatus
 
-from sqlalchemy import (
-    select,
-    Engine,
-    delete
-)
-from sqlalchemy.orm import (DeclarativeBase,
-                            sessionmaker
-                            )
-from dataclasses import dataclass
+from sqlalchemy import select
 
 
 class UserRepository(CrudRepositoryORM):
@@ -34,10 +26,24 @@ class ProjectRepository(CrudRepositoryORM):
     def __init__(self, engine) -> None:
         super().__init__(engine, Project)
 
-
     def find_all_tasks_for_project(self, project_id: int) -> list[Task]:
         with self._create_session() as session:
             stmt = select(Project).filter_by(id=project_id)
             item = session.execute(stmt).scalars().first()
             if item:
                 return item.tasks
+
+
+class TaskRepository(CrudRepositoryORM):
+    def __init__(self, engine) -> None:
+        super().__init__(engine, Task)
+
+    def find_tasks_by_status(self, task_status: TaskStatus) -> list[Task]:
+        with self._create_session() as session:
+            stmt = select(Task).filter_by(status=task_status)
+            return session.execute(stmt).scalars().all()
+
+
+class TaskHistoryRepository(CrudRepositoryORM):
+    def __init__(self, engine) -> None:
+        super().__init__(engine, TaskHistory)
