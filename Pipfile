@@ -8,6 +8,8 @@ sqlalchemy = "*"
 mysqlclient = "*"
 cryptography = "*"
 alembic = "*"
+pytest = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
