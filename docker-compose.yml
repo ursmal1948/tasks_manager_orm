@@ -1,6 +1,23 @@
 version: '3.8'
 
 services:
+
+  # ============================================================================================
+  # [ BAZA DANYCH NOSQL ]
+  # ============================================================================================
+  mongo:
+    restart: always
+    image: mongo
+    volumes:
+      - "mongodb:/data/db"
+    ports:
+      - "27017:27017"
+    networks:
+      - km-flask
+
+  # ============================================================================================
+  # [ BAZA DANYCH MYSQL ]
+  # ============================================================================================
   mysql:
     image: mysql:latest
     volumes:
@@ -16,5 +33,119 @@ services:
       - '3307:3307'
     expose:
       - 3307
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+    networks:
+      - km-flask
+
+  # ============================================================================================
+  # [ BAZA DANYCH MYSQL DO TESTOW ]
+  # Bedziemy ja sobie podpinac na potrzeby testowania.
+  # ============================================================================================
+  mysql-test:
+    image: mysql:latest
+    volumes:
+      - mysql-test:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_1
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user1234
+      MYSQL_TCP_PORT: 3308
+    ports:
+      - '3308:3308'
+    expose:
+      - 3308
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+    networks:
+      - km-flask
+
+  # ===================================================================================
+  # [ APLIKACJA WEBOWA ]
+  # ===================================================================================
+  # Sweris flask czeka az serqisy mysql i mysql-test wstana.
+  # jak sie wywali moj kontenr to musze restartowac. jak sie baza danych postawi to nie ma na co czekac.
+  tasks:
+    restart: always
+    # jak instalujemy mysql czy nosql to bierzemy z gotoywhc kontenerow, a tu z dokcerfile
+    build:
+      context: tasks
+      dockerfile: Dockerfile
+    # gunicorn uruchomi 4 workers, ktore beda obslugiwaly requesty przychodzace
+    # z nginx i wywolywaly create_app skonfigurowana w naszym projekcie
+
+    # Dzieki --reload gunicorn przeladowuje automatycznie wszelkie zmiany w kodzie
+    # gunicorn mowi na jakim porcie bedzie uruchomiona moja aplikacja.
+    # daje nam wywolanie metody main. Ktore napisalam w app.create_app i main ruszy.
+    # mamy 4 woekrow, beda mieli load balancing, jak przyjdzie 1 request to bedzie pierwszy worker
+    # jak drugi request to drugi worker. Jak dojde do ostatniego, to przy kolejnym requescie bedzie
+    # zakrecenie do ostatniego
+    # --reload jak cos w kodzie napisze i zmienie, to sie to przebuduje,
+    command: gunicorn --bind 0.0.0.0:8000 --workers 4 'main:create_app()' --reload
+    volumes:
+      # bind mounts. Katalog reprzentujcay cala strukture naszego projektu, ma byc zmapowanhy do katalogu roboczego
+      # jak to podmapuje to cokolwiek nie napisze w kodzie to od razu w kontenrze ta zmiana bedzie. I jak mechanizm
+      # w trybie reload wykryje ta zmiane to sie od razu automatycznie przeladuje. Majac taka konfiguracje na potrzeby
+      # developerskie bede miala ciagle przeladowujacy sie kontenre, z najnowsza mozliwa wersja flaska ktora sobie
+      # napiszwmy.
+      - ./tasks:/webapp
+
+    # Tutaj sprawdzamy, czy kontener mysql jest uruchomiony prawidlowo
+    # To powoduje, ze kontener webapp moze normalnie ruszyc, kiedy kontener
+    # mysql dziala prawidlowo
+    # Jezeli tego nie zrobimy niestety nie dziala restartowanie kontenera
+    # jezeli cos pojdzie nie tak - konfiguracja Django wymaga prawidlowej
+    # pracy kontener mysql
+    # ten kontenery od bazy danych kiedy wstaja to nasz serwis nasluchuje czy te serwisy sie dobrze uruchomily
+    # i jak tak to pozwli isc dalej.
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mysql-test:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    networks:
+      # bardzo waznym jest nadanie w tym miejscu aliasu dla polaczenia ktore
+      # w ramach sieci km-flask bedzie realizowane z kontenerem flask
+      # ten alias jest pozniej wykorzystany w pliku konfiguracyjnym default.conf
+      km-flask:
+        # za pomoca tego aliasy bedzie wykorzystywany przy konfiguracji z nginx.
+        aliases:
+          # ta nazwa bedzie wykorzystywana do ientyfikowania kto przychodzi, jaki serwer. Jezeli nagle pojawia sie
+          # requesty od flask app, to on wie ze ma przekoerowac do flask:8000 czyli do naszego serwisu.
+          - flask-app
+
+  # ===================================================================================
+  # KONFIGURACJA NGINX
+  # 3 klocek ukladanki. NGINX bierze z twojego lokalnego katalogu default_conf i wysyla
+  # go do specjalnego katalogu u siebie.
+  # ===================================================================================
+  tasks_nginx:
+    restart: always
+    image: nginx:latest
+    volumes:
+      # nginx korzysta z pliku konfiguracyjnego default.conf, ktory bedzie jednoczesnie
+      # w specjalnej lokalizacji tak jak ponizej
+      # default conf jest tu podpinany i przesylany do specjalnej lokalizacji na nginx.
+      - ./tasks/default.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      # chcesz miec dostepny nginx na porcie 80
+      - '80:80'
+    depends_on:
+      - tasks
+    networks:
+      - km-flask
 volumes:
   mysql:
+  mongodb:
+  mysql-test:
+
+networks:
+  km-flask:
+
+# Po tej konfiguracji
+# gunicorn robi mi 4 workerow.
+# [FLASK] <=== [8000] <=== [GUNCORN] <== (4 workers) <=== NGINEX [80]
