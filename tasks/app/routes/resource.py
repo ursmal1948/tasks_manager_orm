@@ -24,7 +24,7 @@ class UserNameResource(Resource):
     parser.add_argument('email', type=str, required=True, help='email of user is required')
     parser.add_argument('password', type=str, required=True, help='Password of user is required')
 
-    def get(name: str) -> Response:
+    def get(self, name: str) -> Response:
         user = users_service.get_by_name(name)
         if user:
             return jsonify({'user': user.to_dict(), 'status': 201})
