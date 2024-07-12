@@ -9,7 +9,7 @@ from app.db.entity import TaskStatus
 from flask_json_schema import JsonSchema
 from flask_restful import Api, reqparse
 from app.db.configuration import sa
-
+from flask_migrate import Migrate
 logging.basicConfig(level=logging.INFO)
 
 from app.routes.projects import projects_blueprint
@@ -53,6 +53,8 @@ def create_app() -> Flask:
         # MailSender.send('ula.malin35@gmail.com', f'Task status change', f'<h1>New status of task:</h1>')
 
         logging.info('------ [ AFTER CREATE ALL] --------')
+        migrate = Migrate(app, sa)
+
 
         @app.errorhandler(Exception)
         def handle_error(error: Exception):
