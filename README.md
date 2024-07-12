@@ -1,4 +1,4 @@
-## Project Description
+# Project Description
 
 The project is a comprehensive project management system aimed at organizing tasks, projects, and user interactions efficiently. It allows users to:
 - Manage Projects: Users can create and manage projects with details such as name, description, start date, and end date.
