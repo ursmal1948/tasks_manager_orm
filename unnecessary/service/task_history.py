@@ -1,5 +1,5 @@
-from src.persistence.repositories.models import TaskHistoryRepository
-from src.persistence.models import TaskHistory
+from app.persistence.repositories.models import TaskHistoryRepository
+from unnecessary.persistence.models import TaskHistory
 
 
 class TaskHistoryService:
@@ -9,6 +9,9 @@ class TaskHistoryService:
         history = TaskHistory(description_change=description_change, task_id=task_id, user_id=user_id)
         self.task_history_repo.save_or_update(history)
 
+    # TODO zapisywanie historii zmian w zadaniach.
+    ## modyfikuje istneijacy juz obiekt i aktualizuje description change. Czy podejscie z
+    ## tworzeniem nowego rekordu.
     def change_description(self, task_history_id: int, new_description: str) -> str:
         task_history = self.task_history_repo.find_by_id(task_history_id)
         if task_history:
