@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from src.persistence.models import Task, TaskStatus
-from src.persistence.repositories.models import ProjectRepository, TaskRepository
+from unnecessary.persistence.models import Task, TaskStatus
+from app.persistence.repositories.models import ProjectRepository, TaskRepository
 
 
 @dataclass

@@ -1,5 +1,5 @@
-from src.persistence.repositories.orm import CrudRepositoryORM
-from src.persistence.models import User, Project, Task, TaskHistory, TaskStatus
+from app.persistence.repositories.orm import CrudRepositoryORM
+from unnecessary.persistence.models import User, Project, Task, TaskHistory, TaskStatus
 
 from sqlalchemy import select
 
