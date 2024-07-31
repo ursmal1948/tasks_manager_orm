@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 # ------------------------------------------------------------
 # KONFIGURACJA DB
 # ------------------------------------------------------------
@@ -21,6 +20,6 @@ MAIL_SETTINGS = {
     'MAIL_SERVER': getenv('MAIL_SERVER', 'smtp.gmail.com'),
     'MAIL_PORT': int(getenv('MAIL_PORT', 465)),
     'MAIL_USE_SSL': bool(getenv('MAIL_USE_SSL', True)),
-    'MAIL_USERNAME': getenv('MAIL_USERNAME', 'testowy2.kmprograms@gmail.com'),
-    'MAIL_PASSWORD': getenv('MAIL_PASSWORD', 'jjtdkjurrfqdgqxu'),
+    'MAIL_USERNAME': getenv('MAIL_USERNAME', 'ula.malin35@gmail.com'),
+    'MAIL_PASSWORD': getenv('MAIL_PASSWORD', 'dmmzadtkkgjteysw'),
 }
