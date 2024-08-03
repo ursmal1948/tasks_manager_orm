@@ -104,8 +104,39 @@ status_schema = {
     "required": ["status"]
 }
 
+user_with_project_schema = {
+    "type": "object",
+    "properties": {
+        "username": {
+            "type": "string",
+            "pattern": r'^[A-Z][a-z]+$'
+        },
+        "email": {
+            "type": "string",
+            "pattern": r'[\w\.-]+@(gmail.com|wp.pl|onet.pl)$'
+        },
+        "password": {
+            "type": "string",
+            "pattern": r'[\w\.-]+$'
+        },
+        "project_name": {
+            "type": "string",
+        },
+        "project_description": {
+            "type": "string",
+        }
+    },
+    "required": ["username", "email", "project_name", "password", "project_description"]
+}
+
 
 def validate_email(email: str) -> bool:
     if not re.match(r'[\w\\.-]+@(gmail.com|wp.pl|onet.pl)$', email):
+        return False
+    return True
+
+
+def validate_name(name: str) -> bool:
+    if not re.match(r'^[A-Z][a-z]+$', name):
         return False
     return True
