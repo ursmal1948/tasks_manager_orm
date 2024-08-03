@@ -41,7 +41,6 @@ class UserNameResource(Resource):
             email=json_body['email'],
             password=json_body['password']
         )
-        # todo sprawdzic to. czy get last added jest.
         added_user = users_service.get_last_added_user()
         return {'user': added_user.to_dict()}, 201
 
