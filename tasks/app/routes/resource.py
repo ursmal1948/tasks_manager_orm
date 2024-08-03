@@ -1,160 +1,170 @@
-from flask_restful import Resource, reqparse
-from flask import Response, jsonify, make_response, current_app
+from flask_restful import Resource
+from flask import Response, jsonify, request
 import logging
-from flask_json_schema import JsonSchema, JsonValidationError
+from jsonschema import validate
 
-from app.db.entity import UserEntity, ProjectEntity, CommentEntity
 from app.service.configuration import (
     users_service,
     projects_service,
     users_with_projects_service,
-    comments_service
+    comments_service,
+    task_histories_service
+)
+from app.routes.schemas import (
+    email_and_password_schema,
+    name_and_password_schema,
+    user_id_task_id_and_creation_data_schema,
+    user_id_and_description_schema,
+    user_with_project_schema,
+    validate_email,
+    validate_name
 )
 import datetime
 
 logging.basicConfig(level=logging.INFO)
-from dataclasses import dataclass
 
-
-# TODO STATYCZNE METODY.
 
 class UserNameResource(Resource):
-    parser = reqparse.RequestParser()
-
-    parser.add_argument('email', type=str, required=True, help='email of user is required')
-    parser.add_argument('password', type=str, required=True, help='Password of user is required')
 
     def get(self, name: str) -> Response:
         user = users_service.get_by_name(name)
-        if user:
-            return jsonify({'user': user.to_dict(), 'status': 201})
-        return {'message': 'User not fouund'}, 404
+        return {'user': user.to_dict()}, 201
 
     def post(self, name: str) -> Response:
-        try:
-            if users_service.get_by_name(name):
-                return {'message': 'User already exists'}, 400
-            request_data = UserNameResource.parser.parse_args()
+        if not validate_name(name):
+            return {'message': 'invalid name'}, 400
+        json_body = request.json
+        validate(instance=json_body, schema=email_and_password_schema)
 
-            users_service.add_user(
-                name=name,
-                email=request_data['email'],
-                password=request_data['password']
-            )
-            user = users_service.get_by_name(name)
-            return {'user': user.to_dict()}, 201
-        except Exception as e:
-            logging.error(e)
-            return {'message': 'Cannot create user'}, 500
+        users_service.add_user(
+            name=name,
+            email=json_body['email'],
+            password=json_body['password']
+        )
+        # todo sprawdzic to. czy get last added jest.
+        added_user = users_service.get_last_added_user()
+        return {'user': added_user.to_dict()}, 201
 
     def delete(self, name: str) -> Response:
         user = users_service.get_by_name(name)
-        if user:
-            users_service.delete_user(user.id)
-            return {'message': 'User deleted'}
-        return {'user': 'User does not exist'}, 500
+        users_service.delete_user(user.id)
+        return {'message': 'user deleted'}, 200
+
+
+class UserEmailResource(Resource):
+
+    def get(self, email: str) -> Response:
+        user = users_service.get_by_email(email)
+        return {'user': user.to_dict()}, 200
+
+    def post(self, email: str) -> Response:
+        if not validate_email(email):
+            return {'message': 'invalid email'}, 400
+
+        json_body = request.json
+        validate(instance=json_body, schema=name_and_password_schema)
+
+        users_service.add_user(
+            name=json_body['name'],
+            email=email,
+            password=json_body['password']
+        )
+        added_user = users_service.get_last_added_user()
+        return {'user': added_user.to_dict()}, 201
+
+    def delete(self, email: str) -> Response:
+        user = users_service.get_by_email(email)
+        users_service.delete_user(user.id)
+        return jsonify({'message': 'user deleted'}), 200
 
 
 class UsersListResource(Resource):
     def get(self) -> Response:
-        return {'users': [user.to_dict() for user in users_service.get_all()]}, 200
-
-
-class UserEmailResource(Resource):
-    parser = reqparse.RequestParser()
-
-    parser.add_argument('name', type=str, required=True, help='email of user is required')
-    parser.add_argument('password', type=str, required=True, help='Password of user is required')
-
-    def get(self, email: str) -> Response:
-        user = users_service.get_by_email(email)
-        if user:
-            return jsonify({'user': user.to_dict(), 'status': 201})
-        return {'message': 'User not fouund'}, 404
-
-    def post(self, email: str) -> Response:
-        try:
-            if users_service.get_by_email(email):
-                return {'message': 'User already exists'}, 400
-            request_data = UserEmailResource.parser.parse_args()
-
-            users_service.add_user(
-                name=request_data['name'],
-                email=email,
-                password=request_data['password']
-            )
-            user = users_service.get_by_email(email)
-            return {'user': user.to_dict()}, 201
-        except Exception as e:
-            logging.error(e)
-            return {'message': 'Cannot create user'}, 500
-
-    def delete(self, email: str) -> Response:
-        user = users_service.get_by_email(email)
-        if user:
-            users_service.delete_user(user.id)
-            return {'message': 'User deleted'}
-        return {'user': 'User does not exist'}, 500
+        users = users_service.get_all()
+        return {'users': [user.to_dict() for user in users]}, 200
 
 
 class CommentContentResource(Resource):
-    parser = reqparse.RequestParser()
-
-    parser.add_argument('creation_data', type=datetime, help='Data creation of comment',
-                        default=datetime.datetime.now())
-    parser.add_argument('user_id', type=int, required=True, help='User id required')
-    parser.add_argument('task_id', type=int, required=True, help='Task id required')
 
     def get(self, content: str) -> Response:
         comment = comments_service.get_by_content(content)
-        if comment:
-            return jsonify({'comment': comment.to_dict(), 'status': 201})
-        return {'message': 'Comment not found'}, 404
+        return {'comment': comment.to_dict()}, 200
 
     def post(self, content: str) -> Response:
-        try:
-            if comments_service.get_by_content(content):
-                return {'message': 'Comment already exists'}, 400
+        json_body = request.json
+        validate(instance=json_body, schema=user_id_task_id_and_creation_data_schema)
+        user_id = json_body['user_id']
+        task_id = json_body['task_id']
+        creation_date = json_body.get('creation_date', datetime.datetime.now())
 
-            request_data = CommentContentResource.parser.parse_args()
-            comments_service.add_comment(
-                content=content,
-                creation_data=request_data['creation_data'],
-                user_id=request_data['user_id'],
-                task_id=request_data['task_id']
-            )
-            return {'message': 'Comment created'}, 201
-        except Exception as e:
-            logging.error(e)
-            return {'message': 'Cannot create comment'}, 500
+        comments_service.add_comment(
+            content=content,
+            creation_data=creation_date,
+            user_id=user_id,
+            task_id=task_id
+        )
+        return {'message': 'comment added'}, 200
 
     def delete(self, content: str) -> Response:
         comment = comments_service.get_by_content(content)
-        if comment:
-            comments_service.delete_comment(comment.id)
-            return {'message': 'Comment deleted'}
-        return {'message': 'Comment does not exist'}, 500
+        comments_service.delete_comment(comment.id)
+        return {'message': 'comment deleted'}, 200
 
 
 class CommentIdResource(Resource):
     def get(self, comment_id: int) -> Response:
         comment = comments_service.get_by_id(comment_id)
-        if comment:
-            return jsonify({'comment': comment.to_dict(), 'status': 201})
-        return {'message': 'Comment not found'}, 404
+        return {'comment': comment.to_dict()}, 200
 
-    def delete(self, comment_id: int):
-        comment = comments_service.get_by_id(comment_id)
-        if comment:
-            comments_service.delete_comment(comment.id)
-            return {'message': 'Comment deleted'}
-        return {'message': 'Comment does not exist'}, 500
+    def delete(self, comment_id: int) -> Response:
+        comments_service.delete_comment(comment_id)
+        return {'message': 'comment deleted'}
 
 
 class CommentsListResource(Resource):
     def get(self) -> Response:
-        return [comment.to_dict() for comment in comments_service.get_all()], 200
+        comments = comments_service.get_all()
+        return {'comments': [comment.to_dict() for comment in comments]}, 200
 
-    # def post(self, content: str) -> Response:
-    #     comment=
-# 2024-07-10T02:05:20.269914
+
+class TaskHistoryTaskIdResource(Resource):
+    def get(self, task_id: int) -> Response:
+        histories = task_histories_service.get_task_histories_for_task(task_id)
+        return jsonify({'task_histories': [history.to_dict() for history in histories]})
+
+    def post(self, task_id: int) -> Response:
+        json_body = request.json
+        validate(instance=json_body, schema=user_id_and_description_schema)
+        user_id = json_body['user_id']
+        description_change = json_body['description']
+
+        task_histories_service.add_task_history(
+            task_id=task_id,
+            user_id=user_id,
+            description_change=description_change
+        )
+        return {'message': 'task history added', 'task_id': task_id}, 200
+
+    def delete(self, task_id: int) -> Response:
+        task_histories_service.delete_all_task_histories_for_task(task_id)
+        return {'message': 'task histories deleted', 'task_id': task_id}, 200
+
+
+class UserWithProjectResource(Resource):
+    def post(self) -> Response:
+        json_body = request.json
+        validate(instance=json_body, schema=user_with_project_schema)
+        username = json_body['username']
+        email = json_body['email']
+        password = json_body['password']
+        project_name = json_body['project_name']
+        project_description = json_body['project_description']
+
+        users_with_projects_service.add_user_with_project(
+            username=username,
+            email=email,
+            password=password,
+            project_name=project_name,
+            project_description=project_description
+        )
+        return {'message': 'user and project added'}, 201
