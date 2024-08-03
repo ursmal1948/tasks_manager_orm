@@ -1,8 +1,5 @@
-
-# starsze poodejscie ktore wspiera tylko asynchroniczne wysylanie maila
-from flask_mail import Mail, Message
-
 from flask import Flask
+from flask_mail import Mail, Message
 
 
 class MailSender:
@@ -24,16 +21,11 @@ class MailSender:
                         </body>
                     </html>
                 '''
-        # nasza aplikacja flaskowa zleca mailowi ktory napiszemy (maila
-        # moge np pobierac ze zmeinncyh srodowiskowych). tetowy2.kmprograms@gmail.com
-        # prosze zebyc wyslal maila ktorego przygotowuje do
+
         message = Message(
-            # temat wiadomosci email.
             subject=subject,
-            # kto wysyla.
             sender=cls._sender,
             recipients=[email],
-            # tresc wiadomosci
             html=mail_content,
         )
         cls._mail.send(message)
