@@ -5,7 +5,6 @@ from app.db.entity import TaskStatus
 
 comments_blueprint = Blueprint('comments', __name__, url_prefix='/comments')
 
-
 @comments_blueprint.route('/<int:comment_id>', methods=['PATCH'])
 def update_comment_content(comment_id: int) -> Response:
     new_content = request.args.get('new_content')
