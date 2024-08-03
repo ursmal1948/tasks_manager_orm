@@ -22,7 +22,6 @@ def get_projects_for_user():
     return jsonify({'projects': [p.to_dict() for p in user_projects]}), 200
 
 
-#   todo git
 @projects_blueprint.route('', methods=['GET'])
 def get_all_projects() -> Response:
     return jsonify({'projects': [p.to_dict() for p in projects_service.get_all()]}), 200

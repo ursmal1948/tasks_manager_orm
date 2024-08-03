@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ------------------------------------------------------------
-# KONFIGURACJA DB
+# DB CONFIGURATION
 # ------------------------------------------------------------
 DB_USERNAME = getenv('DB_USERNAME', 'user')
 DB_PASSOWRD = getenv('DB_PASSWORD', 'user1234')
@@ -14,7 +14,7 @@ DB_HOST = getenv('DB_HOST', 'mysql')
 DB_URL = f'mysql://{DB_USERNAME}:{DB_PASSOWRD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
 # ------------------------------------------------------------
-# KONFIGURACJA MAILA
+# MAIL CONFIGURATION
 # ------------------------------------------------------------
 MAIL_SETTINGS = {
     'MAIL_SERVER': getenv('MAIL_SERVER', 'smtp.gmail.com'),

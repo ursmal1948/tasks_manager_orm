@@ -1,10 +1,13 @@
 # Project Description
 
-- Project allows you to create projects, tasks, comments assign them to specific users.
-- It is also possible to get insight into the development of the task, by creating its history
+- Project allows you to create projects, tasks, comments assign them to specific users, make modifications on them. 
+- Possibility to get insight into the development of the task, by creating its history
   of changes.
-- Sending email to user if any changes have been made to task's status of specific user.
-
+- Sending notifications to users when there are updates on tasks status they are assigned to
+# WEB LAYER
+I used flask framework for building web app and api endpoints. All of them have been checked with POSTMAN
+to ensure they work as intended. 
+Below you can find documentation of the requests.
 # API Documentation
 
 https://documenter.getpostman.com/view/36229565/2sA3e5cTMk#7b196503-103d-44f3-8e80-c500d6594915
