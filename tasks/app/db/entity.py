@@ -2,7 +2,6 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 from sqlalchemy.orm import (
-    relationship,
     Mapped,
     mapped_column
 )
@@ -13,7 +12,7 @@ from app.db.configuration import sa
 class UserEntity(sa.Model):
     __tablename__ = 'users'
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(sa.String(30), nullable=False)
+    name: Mapped[str] = mapped_column(sa.String(30), nullable=False, unique=True)
     email: Mapped[str] = mapped_column(sa.String(30), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(sa.String(30), nullable=False)
 
@@ -41,9 +40,8 @@ class ProjectEntity(sa.Model):
     __tablename__ = 'projects'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # todo moze unique name
     name: Mapped[str] = mapped_column(sa.String(30), nullable=False, unique=True)
-    description: Mapped[str] = mapped_column(sa.String(30), nullable=False, unique=True)
+    description: Mapped[str] = mapped_column(sa.String(30), nullable=False)
     user_id: Mapped[int] = mapped_column(sa.ForeignKey('users.id'))
 
     tasks: Mapped[list['TaskEntity']] = sa.relationship('TaskEntity',
@@ -89,8 +87,6 @@ class TaskEntity(sa.Model):
                                                                         cascade="all, delete-orphan"
 
                                                                         )
-
-    # projects: Mapped[list['ProjectEntity']] = sa.relationship('ProjectEntity', backref=sa.backref('user', lazy=False))
 
     def __str__(self) -> str:
         return f'ID: {self.id} Title: {self.title} Status: {self.status} Project id: {self.project_id}'
