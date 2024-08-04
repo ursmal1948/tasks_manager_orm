@@ -8,16 +8,7 @@ class ProjectsService:
     project_repository: ProjectRepository
 
     def get_all(self) -> list[ProjectEntity]:
-        projects = self.project_repository.find_all()
-        if not projects:
-            raise ValueError('No projects found')
-        return projects
-
-    # def get_by_id(self, project_id: int) -> ProjectEntity | None:
-    #     return self.project_repository.find_by_id(project_id)
-    #
-    # def get_by_name(self, project_name: str) -> ProjectEntity | None:
-    #     return self.project_repository.find_by_name(project_name)
+        return self.project_repository.find_all()
 
     def delete_project(self, project_id: int) -> None:
         project = self.project_repository.find_by_id(project_id)
