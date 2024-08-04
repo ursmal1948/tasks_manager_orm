@@ -10,4 +10,5 @@ to ensure they work as intended.
 Below you can find documentation of the requests.
 # API Documentation
 
-https://documenter.getpostman.com/view/36229565/2sA3e5cTMk
+<a href="https://documenter.getpostman.com/view/36229565/2sA3e5cTMk" target="_blank">POSTMAN DOCUMENTATION</a><br>
+
