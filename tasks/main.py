@@ -39,7 +39,6 @@ def create_app() -> Flask:
         logging.info('------ [ BEFORE CREATE ALL] --------')
         # sa.drop_all()
         # sa.create_all()
-
         app.config.update(MAIL_SETTINGS)
         MailSender(app, 'ula.malin35@gmail.com')
 
