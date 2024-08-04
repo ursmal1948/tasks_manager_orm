@@ -13,11 +13,8 @@ from app.routes.schemas import user_id_and_description_schema
 projects_blueprint = Blueprint('projects', __name__, url_prefix='/projects')
 
 
-@projects_blueprint.route('', methods=['GET'])
-def get_projects_for_user():
-    user_id = request.args.get('user_id')
-    if not user_id:
-        return jsonify({'message': 'user_id is required'}), 400
+@projects_blueprint.route('/users/<int:user_id>', methods=['GET'])
+def get_projects_for_user(user_id: int):
     user_projects = users_service.get_users_projects(user_id)
     return jsonify({'projects': [p.to_dict() for p in user_projects]}), 200
 
