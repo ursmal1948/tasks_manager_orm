@@ -7,3 +7,4 @@ class Base(DeclarativeBase):
 
 
 sa = SQLAlchemy(model_class=Base)
+sa_test = SQLAlchemy(model_class=Base)
