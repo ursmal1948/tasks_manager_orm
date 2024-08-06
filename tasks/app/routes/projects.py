@@ -7,6 +7,7 @@ from app.service.configuration import (users_service,
                                        projects_with_tasks_service,
                                        users_with_projects_service
                                        )
+from app.service.dto import CreateProjectDto
 
 from app.routes.schemas import user_id_and_description_schema
 
@@ -14,7 +15,7 @@ projects_blueprint = Blueprint('projects', __name__, url_prefix='/projects')
 
 
 @projects_blueprint.route('/users/<int:user_id>', methods=['GET'])
-def get_projects_for_user(user_id: int):
+def get_projects_for_user(user_id: int) -> Response:
     user_projects = users_service.get_users_projects(user_id)
     return jsonify({'projects': [p.to_dict() for p in user_projects]}), 200
 
@@ -25,29 +26,26 @@ def get_all_projects() -> Response:
 
 
 @projects_blueprint.route('/<string:project_name>', methods=['POST'])
-def add_project(project_name: str):
+def add_project(project_name: str) -> Response:
     request_data = request.json
     validate(instance=request_data, schema=user_id_and_description_schema)
 
     user_id = request_data['user_id']
     description = request_data['description']
-
-    users_with_projects_service.add_project_to_user(
-        project_name=project_name,
-        project_description=description,
-        user_id=user_id
-    )
-    return jsonify({'message': 'Project added successfully'}), 201
+    project_data = {"name": project_name, "description": description, "user_id": user_id}
+    project_dto = CreateProjectDto.from_dict(project_data)
+    users_with_projects_service.add_project_to_user(project_dto)
+    return project_dto.to_dict()
 
 
 @projects_blueprint.route('/<int:project_id>', methods=['DELETE'])
-def delete_project(project_id: int):
+def delete_project(project_id: int) -> Response:
     projects_service.delete_project(project_id=project_id)
     return jsonify({'message': 'project deleted'}), 200
 
 
 @projects_blueprint.route('/', methods=['DELETE'])
-def delete_all_projects():
+def delete_all_projects() -> Response:
     projects_service.delete_all()
     return jsonify({'message': 'projects deleted'}), 200
 
@@ -59,7 +57,7 @@ def get_project_tasks(project_id: int) -> Response:
 
 
 @projects_blueprint.route('/', methods=['DELETE'])
-def delete_user_projects():
+def delete_user_projects() -> Response:
     user_id = request.args.get('user_id')
     if not user_id:
         return jsonify({'message': 'user_id is required'}), 400

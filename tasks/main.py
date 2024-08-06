@@ -17,6 +17,7 @@ from app.routes.resource import (UserNameResource,
                                  UsersListResource,
                                  UserEmailResource,
                                  UserWithProjectResource,
+                                 ProjectWithTaskResource,
                                  CommentContentResource,
                                  CommentIdResource,
                                  CommentsListResource,
@@ -73,6 +74,7 @@ def create_app() -> Flask:
         api.add_resource(UserEmailResource, '/users/email/<string:email>')
         api.add_resource(UsersListResource, '/users')
         api.add_resource(UserWithProjectResource, '/users-with-projects')
+        api.add_resource(ProjectWithTaskResource, '/projects-with-tasks')
         api.add_resource(CommentContentResource, '/comments/<string:content>')
         api.add_resource(CommentIdResource, '/comments/<int:comment_id>')
         api.add_resource(TaskHistoryTaskIdResource, '/task-histories/task-id/<int:task_id>')
