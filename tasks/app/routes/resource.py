@@ -2,13 +2,15 @@ from flask_restful import Resource
 from flask import Response, jsonify, request
 import logging
 from jsonschema import validate
+import datetime
 
 from app.service.configuration import (
     users_service,
     projects_service,
     users_with_projects_service,
     comments_service,
-    task_histories_service
+    task_histories_service,
+    projects_with_tasks_service
 )
 from app.routes.schemas import (
     email_and_password_schema,
@@ -16,10 +18,11 @@ from app.routes.schemas import (
     user_id_task_id_and_creation_data_schema,
     user_id_and_description_schema,
     user_with_project_schema,
+    project_with_task_schema,
     validate_email,
     validate_name
 )
-import datetime
+from app.service.dto import CreateProjectWithTaskDto, CreateUserWithProjectDto
 
 logging.basicConfig(level=logging.INFO)
 
@@ -74,7 +77,7 @@ class UserEmailResource(Resource):
     def delete(self, email: str) -> Response:
         user = users_service.get_by_email(email)
         users_service.delete_user(user.id)
-        return jsonify({'message': 'user deleted'}), 200
+        return {'message': 'user deleted'}, 200
 
 
 class UsersListResource(Resource):
@@ -153,17 +156,15 @@ class UserWithProjectResource(Resource):
     def post(self) -> Response:
         json_body = request.json
         validate(instance=json_body, schema=user_with_project_schema)
-        username = json_body['username']
-        email = json_body['email']
-        password = json_body['password']
-        project_name = json_body['project_name']
-        project_description = json_body['project_description']
+        user_with_project_dto = CreateUserWithProjectDto.from_dict(json_body)
+        users_with_projects_service.add_user_with_project(user_with_project_dto)
+        return user_with_project_dto.to_dict()
 
-        users_with_projects_service.add_user_with_project(
-            username=username,
-            email=email,
-            password=password,
-            project_name=project_name,
-            project_description=project_description
-        )
-        return {'message': 'user and project added'}, 201
+
+class ProjectWithTaskResource(Resource):
+    def post(self) -> Response:
+        json_body = request.json
+        validate(instance=json_body, schema=project_with_task_schema)
+        project_with_task_dto = CreateProjectWithTaskDto.from_dict(json_body)
+        projects_with_tasks_service.add_project_with_task(project_with_task_dto)
+        return project_with_task_dto.to_dict()
