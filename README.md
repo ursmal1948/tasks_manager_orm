@@ -1,6 +1,6 @@
 # Project Description
 
-- Project allows you to create projects, tasks, comments assign them to specific users, make modifications on them. 
+- Project allows you to create users, projects, tasks, comments assign them to specific users, make modifications on them. 
 - Possibility to get insight into the development of the task, by creating its history
   of changes.
 - Sending notifications to users when there are updates on tasks status they are assigned to.
