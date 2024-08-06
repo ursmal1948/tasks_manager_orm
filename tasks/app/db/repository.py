@@ -119,6 +119,10 @@ class ProjectRepository(CrudRepositoryORM[UserEntity]):
     def find_user_id_by_project_id(self, project_id: int) -> str:
         return self.find_by_id(project_id).user_id
 
+    def find_last_added_project(self) -> UserEntity | None:
+        stmt = select(self.entity_type).order_by(ProjectEntity.id.desc()).limit(1)
+        return self.sa.session.execute(stmt).scalars().first()
+
 
 class TaskRepository(CrudRepositoryORM[TaskEntity]):
     def __init__(self, db: SQLAlchemy):
