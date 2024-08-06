@@ -129,6 +129,29 @@ user_with_project_schema = {
     "required": ["username", "email", "project_name", "password", "project_description"]
 }
 
+project_with_task_schema = {
+    "type": "object",
+    "properties": {
+        "project_name": {
+            "type": "string",
+        },
+        "project_description": {
+            "type": "string",
+        },
+        "user_id": {
+            "type": "integer",
+        },
+        "task_title": {
+            "type": "string",
+        },
+        "task_status": {
+            "type": "string",
+            "enum": ["NEW", "IN_PROGRESS", "COMPLETED"]
+        },
+    },
+    "required": ["project_name", "project_description", "user_id", "task_title"]
+}
+
 
 def validate_email(email: str) -> bool:
     if not re.match(r'[\w\\.-]+@(gmail.com|wp.pl|onet.pl)$', email):
